@@ -51,3 +51,6 @@ steps:
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/backend-image:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
