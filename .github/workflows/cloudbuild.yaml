@@ -46,9 +46,35 @@ steps:
       - '--allow-unauthenticated'
       - '--set-secrets'
       - 'GEMINI_API_KEY=GEMINI_API_KEY:latest'
+  # 6. BUILD FRONTEND
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build-Frontend'
+    args: ['build', '-f', 'Dockerfile.frontend', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/frontend-image:$COMMIT_SHA', '.']
+
+  # 7. PUSH FRONTEND
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push-Frontend'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/frontend-image:$COMMIT_SHA']
+
+  # 8. DEPLOY FRONTEND
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Deploy-Frontend'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'dog-scanner-web'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/frontend-image:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/backend-image:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/frontend-image:$COMMIT_SHA'
 
 options:
   logging: 'CLOUD_LOGGING_ONLY'
