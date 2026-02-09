@@ -1,0 +1,53 @@
+steps:
+  # 1. LINTING: Revisar calidad de código (Rápido y preventivo)
+  - name: 'python:3.11-slim'
+    id: 'Linting'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install ruff
+        ruff check .
+
+  # 2. TESTS: Ejecutar pruebas unitarias
+  - name: 'python:3.11-slim'
+    id: 'Unit Tests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install -r requirements.txt pytest
+        # Solo ejecuta pytest si existe la carpeta tests, para evitar errores si aún está vacía
+        if [ -d "tests" ]; then pytest tests/; else echo "No hay tests todavía, saltando..."; fi
+
+  # 3. BUILD: Construir la imagen de Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build Image'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/backend-image:$COMMIT_SHA', '.']
+
+  # 4. PUSH: Subir la imagen al Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push Image'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/backend-image:$COMMIT_SHA']
+
+  # 5. DEPLOY: Desplegar en Cloud Run inyectando el Secreto
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Deploy'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'dog-scanner-backend'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/backend-image:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      #   Inyecta el secreto de GCP como variable de entorno
+      - '--set-secrets'
+      - 'GEMINI_API_KEY=GEMINI_API_KEY:latest'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/dog-scanner-repo/backend-image:$COMMIT_SHA'
