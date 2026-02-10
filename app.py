@@ -37,4 +37,4 @@ if img_file:
             st.subheader(f"Raza: {result['breed']}")
             st.info(f"Descripción: {result['description']}")
         except Exception as e:
-            st.error("Error conectando con el servidor.")
+            st.error(f"Error conectando con el servidor: {e}")
