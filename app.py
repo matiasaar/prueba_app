@@ -12,7 +12,7 @@ st.markdown("""
         color: white; border: none; border-radius: 10px; height: 3em; width: 100%;
     }
     </style>
-    """, unsafe_all_with_labels=True)
+    """, unsafe_allow_html=True)
 
 st.title("🐶 Dog Scanner AI")
 st.write("Toma una foto de tu perro y Gemini te dirá qué está haciendo.")
